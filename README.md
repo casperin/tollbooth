@@ -10,10 +10,12 @@ The new function added is `tollbooth.LimitFuncHandler2`:
 func main() {
     http.Handle(
         "/",
-        tollbooth.LimitFuncHandler2(tollbooth.NewLimiter(1, time.Second),
-        HelloHandler,
-        ErrorHandler,
-    ))
+        tollbooth.LimitFuncHandler2(
+            tollbooth.NewLimiter(1, time.Second),
+            HelloHandler,
+            ErrorHandler,
+        ),
+    )
     http.ListenAndServe(":12345", nil)
 }
 
