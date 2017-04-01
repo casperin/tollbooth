@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/didip/tollbooth/config"
+	"github.com/casperin/tollbooth/config"
 )
 
 func TestLimitByKeys(t *testing.T) {

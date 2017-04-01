@@ -1,5 +1,36 @@
-[![GoDoc](https://godoc.org/github.com/didip/tollbooth?status.svg)](http://godoc.org/github.com/didip/tollbooth)
-[![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/didip/tollbooth/master/LICENSE)
+# Tollbooth
+
+This is a fork of the excellent [tollbooth by didip](https://github.com/didip/tollbooth). The changes are:
+
+- Added the option to add a func to handle requests whenever the limit reached instead of responding with a generic error.
+- Removed thirdparty section.
+
+The new function added is `tollbooth.LimitFuncHandler2`:
+```go
+func main() {
+    http.Handle(
+        "/",
+        tollbooth.LimitFuncHandler2(tollbooth.NewLimiter(1, time.Second),
+        HelloHandler,
+        ErrorHandler,
+    ))
+    http.ListenAndServe(":12345", nil)
+}
+
+func ErrorHandler(w http.ResponseWriter, r *http.Request, err *errors.HTTPError) {
+     // Handle error.
+}
+
+// The HTTPError looks like this.
+type HTTPError struct {
+    Message    string
+    StatusCode int
+}
+```
+
+Everything below is from the original README.
+
+---
 
 ## Tollbooth
 
@@ -59,7 +90,3 @@ func main() {
 
 4. Tollbooth does not require external storage since it uses an algorithm called [Token Bucket](http://en.wikipedia.org/wiki/Token_bucket) [(Go library: golang.org/x/time/rate)](//godoc.org/golang.org/x/time/rate).
 
-
-# Other Web Frameworks
-
-Support for other web frameworks are defined under `/thirdparty` directory.

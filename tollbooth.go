@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/didip/tollbooth/config"
-	"github.com/didip/tollbooth/errors"
-	"github.com/didip/tollbooth/libstring"
+	"github.com/casperin/tollbooth/config"
+	"github.com/casperin/tollbooth/errors"
+	"github.com/casperin/tollbooth/libstring"
 )
 
 // NewLimiter is a convenience function to config.NewLimiter.
@@ -145,15 +145,17 @@ func SetResponseHeaders(limiter *config.Limiter, w http.ResponseWriter) {
 }
 
 // LimitHandler is a middleware that performs rate-limiting given http.Handler struct.
-func LimitHandler(limiter *config.Limiter, next http.Handler) http.Handler {
+func LimitHandler(
+	limiter *config.Limiter,
+	next http.Handler,
+	errFunc func(http.ResponseWriter, *http.Request, *errors.HTTPError),
+) http.Handler {
 	middle := func(w http.ResponseWriter, r *http.Request) {
 		SetResponseHeaders(limiter, w)
 
 		httpError := LimitByRequest(limiter, r)
 		if httpError != nil {
-			w.Header().Add("Content-Type", limiter.MessageContentType)
-			w.WriteHeader(httpError.StatusCode)
-			w.Write([]byte(httpError.Message))
+			errFunc(w, r, httpError)
 			return
 		}
 
@@ -166,5 +168,18 @@ func LimitHandler(limiter *config.Limiter, next http.Handler) http.Handler {
 
 // LimitFuncHandler is a middleware that performs rate-limiting given request handler function.
 func LimitFuncHandler(limiter *config.Limiter, nextFunc func(http.ResponseWriter, *http.Request)) http.Handler {
-	return LimitHandler(limiter, http.HandlerFunc(nextFunc))
+	errHandler := func(w http.ResponseWriter, _ *http.Request, httpError *errors.HTTPError) {
+		w.Header().Add("Content-Type", limiter.MessageContentType)
+		w.WriteHeader(httpError.StatusCode)
+		w.Write([]byte(httpError.Message))
+	}
+	return LimitHandler(limiter, http.HandlerFunc(nextFunc), errHandler)
+}
+
+func LimitFuncHandler2(
+	limiter *config.Limiter,
+	nextFunc func(http.ResponseWriter, *http.Request),
+	errFunc func(http.ResponseWriter, *http.Request, *errors.HTTPError),
+) http.Handler {
+	return LimitHandler(limiter, http.HandlerFunc(nextFunc), errFunc)
 }
